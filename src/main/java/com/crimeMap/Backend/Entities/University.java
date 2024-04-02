@@ -1,5 +1,4 @@
 package com.crimeMap.Backend.Entities;
-
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -7,50 +6,24 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.sql.Timestamp;
-
-@AllArgsConstructor
-@NoArgsConstructor
 @Getter
 @Setter
+@NoArgsConstructor
 @Entity
-@Table(name = "crime_details")
-public class CrimeDetails {
+@Table(name = "university")
+public class University {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne
-    @JoinColumn(name = "university_id")
-    private University university;
-
-    @ManyToOne
-    @JoinColumn(name = "crime_type_id")
-    private CrimeType crimeTypeID;
+    @Column(name = "name", nullable = false)
+    private String name;
 
     @Column(name = "location")
     private String location;
 
-    @Column(name = "date_reported")
-    private Timestamp dateReported;
-
-    @Column(name = "case_id")
-    private String caseId;
-
-    @Column(name = "crime_type")
-    private String crimeType;
-
-    @Column(name = "details")
-    private String details;
-
-    @Column(name = "date_occurred")
-    private Timestamp dateOccurred;
-
-    @Column(name = "status_disposition")
-    private String statusDisposition;
-
-    @Column(name = "updated")
-    private Timestamp updated;
-
+    @Column(name = "is_active", nullable = false)
+    private Boolean isActive;
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private Timestamp createdAt;
@@ -60,6 +33,7 @@ public class CrimeDetails {
 
     @PrePersist
     protected void onCreate() {
+        isActive = true;
         createdAt = new Timestamp(System.currentTimeMillis());
     }
 
@@ -68,4 +42,3 @@ public class CrimeDetails {
         updatedAt = new Timestamp(System.currentTimeMillis());
     }
 }
-

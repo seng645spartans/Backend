@@ -23,6 +23,7 @@ public class CrimeDetailsController {
     @Autowired
     GeoCodingCrimeData geoCodingCrimeData;
 
+
     @GetMapping("/{universityName}")
     public ResponseEntity<List<CrimeDetailsDTO>> getCrimeDetails(@PathVariable String universityName) {
         CrimeDetailsExtraction crimeDetailsExtraction;
