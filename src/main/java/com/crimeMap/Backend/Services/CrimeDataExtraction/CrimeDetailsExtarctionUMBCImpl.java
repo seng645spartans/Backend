@@ -1,6 +1,11 @@
 package com.crimeMap.Backend.Services.CrimeDataExtraction;
 
 import com.crimeMap.Backend.Entities.CrimeDetails;
+import com.crimeMap.Backend.Entities.CrimeType;
+import com.crimeMap.Backend.Entities.University;
+import com.crimeMap.Backend.Repository.CrimeDetailsRepository;
+import com.crimeMap.Backend.Repository.CrimeTypeRepository;
+import com.crimeMap.Backend.Repository.UniversityRepository;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.CloseableHttpClient;
@@ -11,6 +16,7 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.io.File;
@@ -25,11 +31,22 @@ import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 @Component("UMBC")
 public class CrimeDetailsExtarctionUMBCImpl implements CrimeDetailsExtraction{
+
+    @Autowired
+    CrimeDetailsRepository crimeDetailsRepository;
+
+    @Autowired
+    private UniversityRepository universityRepository;
+
+    @Autowired
+    private CrimeTypeRepository crimeTypeRepository;
+
     @Override
     public List<CrimeDetails> getCrimeDetails(String universityName) {
         File file = getCrimePdf();
@@ -45,10 +62,9 @@ public class CrimeDetailsExtarctionUMBCImpl implements CrimeDetailsExtraction{
             while (matcher.find()) {
                 String matchedText = matcher.group(1) != null ? matcher.group(1) + matcher.group(2) : matcher.group(2);
                 CrimeDetails report = getCrimeDetailsFromPDF(matchedText);
-                if (report != null) {
-                    crimeDetailsList.add(report);
-                }
+                addReportToCrimeDetailsList(report, crimeDetailsList);
             }
+            crimeDetailsRepository.saveAll(crimeDetailsList);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -57,6 +73,26 @@ public class CrimeDetailsExtarctionUMBCImpl implements CrimeDetailsExtraction{
         }
         return crimeDetailsList;
     }
+
+    private void addReportToCrimeDetailsList(CrimeDetails report, List<CrimeDetails> crimeDetailsList) {
+        if (report != null) {
+            University university = universityRepository.findByName("UMBC");
+            if (university != null) {
+                report.setUniversity(university);
+            }
+            String convertedCrimeType = convertCrimeType(report.getCrimeType());
+            CrimeType crimeType = crimeTypeRepository.findByDescriptionIgnoreCase(convertedCrimeType);
+            if (crimeType != null) {
+                report.setCrimeTypeID(crimeType);
+            }
+            else {
+                crimeType = crimeTypeRepository.findByDescription("Other");
+                report.setCrimeTypeID(crimeType);
+            }
+            crimeDetailsList.add(report);
+        }
+    }
+
     private static File getCrimePdf(){
         String url = "https://police.umbc.edu/crime/";
         String pdfURL = null;
@@ -149,5 +185,16 @@ public class CrimeDetailsExtarctionUMBCImpl implements CrimeDetailsExtraction{
             return matcher.group(1) + " at " + matcher.group(2);
         }
         return inputDate;
+    }
+    private String convertCrimeType(String crimeType) {
+        if (crimeType == null) {
+            return null;
+        }
+
+        String[] crime = crimeType.split(" ");
+        if (Objects.equals(crime[0], "MAL")) {
+            crime[0] = "MAL DESTRUCTION";
+        }
+        return crime[0];
     }
 }
