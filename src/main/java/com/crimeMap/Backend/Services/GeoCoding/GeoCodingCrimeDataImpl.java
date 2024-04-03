@@ -4,7 +4,6 @@ package com.crimeMap.Backend.Services.GeoCoding;
 import com.crimeMap.Backend.DTO.Response.CrimeDetailsDTO;
 import com.crimeMap.Backend.DTO.Response.GeocodingResultDTO;
 import com.crimeMap.Backend.Entities.CrimeDetails;
-import com.google.maps.model.GeocodingResult;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
