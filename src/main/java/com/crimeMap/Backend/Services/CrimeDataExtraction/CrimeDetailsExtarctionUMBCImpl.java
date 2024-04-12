@@ -1,9 +1,11 @@
 package com.crimeMap.Backend.Services.CrimeDataExtraction;
 
 import com.crimeMap.Backend.Entities.CrimeDetails;
+import com.crimeMap.Backend.Entities.CrimeDetailsScheduler;
 import com.crimeMap.Backend.Entities.CrimeType;
 import com.crimeMap.Backend.Entities.University;
 import com.crimeMap.Backend.Repository.CrimeDetailsRepository;
+import com.crimeMap.Backend.Repository.CrimeDetailsSchedulerRepository;
 import com.crimeMap.Backend.Repository.CrimeTypeRepository;
 import com.crimeMap.Backend.Repository.UniversityRepository;
 import org.apache.http.client.methods.CloseableHttpResponse;
@@ -32,11 +34,12 @@ import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 @Component("UMBC")
-public class CrimeDetailsExtarctionUMBCImpl implements CrimeDetailsExtraction{
+public class CrimeDetailsExtarctionUMBCImpl implements CrimeDetailsExtraction {
 
     @Autowired
     CrimeDetailsRepository crimeDetailsRepository;
@@ -47,11 +50,16 @@ public class CrimeDetailsExtarctionUMBCImpl implements CrimeDetailsExtraction{
     @Autowired
     private CrimeTypeRepository crimeTypeRepository;
 
+    @Autowired
+    private CrimeDetailsSchedulerRepository crimeDetailsSchedulerRepository;
+
     @Override
     public List<CrimeDetails> getCrimeDetails(String universityName) {
         File file = getCrimePdf();
         List<CrimeDetails> crimeDetailsList = new ArrayList<>();
-
+        if(schedulerCheck(universityName)){
+            return returnCrimeDetailsFromDB(universityName);
+        }
         try (PDDocument document = PDDocument.load(file)) {
             PDFTextStripper pdfStripper = new PDFTextStripper();
             String text = pdfStripper.getText(document);
@@ -65,13 +73,41 @@ public class CrimeDetailsExtarctionUMBCImpl implements CrimeDetailsExtraction{
                 addReportToCrimeDetailsList(report, crimeDetailsList);
             }
             crimeDetailsRepository.saveAll(crimeDetailsList);
+            SaveSchedulerRun(universityName);
         } catch (IOException e) {
             e.printStackTrace();
-        }
-        finally {
+        } finally {
             file.delete();
         }
         return crimeDetailsList;
+    }
+
+    private List<CrimeDetails> returnCrimeDetailsFromDB(String universityName) {
+        University university = universityRepository.findByName(universityName);
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime ninetyDaysAgoDateTime = now.minusDays(90);
+        Timestamp ninetyDaysAgo = Timestamp.valueOf(ninetyDaysAgoDateTime);
+        return crimeDetailsRepository.
+               findByUniversityAndDateReportedAfter(university,ninetyDaysAgo);
+    }
+
+    private void SaveSchedulerRun(String universityName) {
+        CrimeDetailsScheduler crimeDetailsScheduler = new CrimeDetailsScheduler();
+        crimeDetailsScheduler.setUniversity(universityName);
+        crimeDetailsScheduler.setLastScheduledRun(new Timestamp(System.currentTimeMillis()));
+        crimeDetailsSchedulerRepository.save(crimeDetailsScheduler);
+    }
+
+    private boolean schedulerCheck(String universityName) {
+        Optional<CrimeDetailsScheduler> crimeDetailsSchedulerOptional = crimeDetailsSchedulerRepository.
+                findFirstByUniversityOrderByLastScheduledRunDesc(universityName);
+
+        if (crimeDetailsSchedulerOptional.isPresent()) {
+            CrimeDetailsScheduler crimeDetailsScheduler = crimeDetailsSchedulerOptional.get();
+            return isWithin24Hours(crimeDetailsScheduler.getLastScheduledRun(), new Timestamp(System.currentTimeMillis()));
+        } else {
+            return false;
+        }
     }
 
     private void addReportToCrimeDetailsList(CrimeDetails report, List<CrimeDetails> crimeDetailsList) {
@@ -84,8 +120,7 @@ public class CrimeDetailsExtarctionUMBCImpl implements CrimeDetailsExtraction{
             CrimeType crimeType = crimeTypeRepository.findByDescriptionIgnoreCase(convertedCrimeType);
             if (crimeType != null) {
                 report.setCrimeTypeID(crimeType);
-            }
-            else {
+            } else {
                 crimeType = crimeTypeRepository.findByDescription("Other");
                 report.setCrimeTypeID(crimeType);
             }
@@ -93,7 +128,7 @@ public class CrimeDetailsExtarctionUMBCImpl implements CrimeDetailsExtraction{
         }
     }
 
-    private static File getCrimePdf(){
+    private static File getCrimePdf() {
         String url = "https://police.umbc.edu/crime/";
         String pdfURL = null;
         File file = null;
@@ -108,8 +143,8 @@ public class CrimeDetailsExtarctionUMBCImpl implements CrimeDetailsExtraction{
             }
 
             if (pdfURL != null) {
-                downloadPdf(pdfURL, "downloaded_pdf.pdf");
-                file = new File("downloaded_pdf.pdf");
+                downloadPdf(pdfURL, "downloaded.pdf");
+                file = new File("downloaded.pdf");
             }
         } catch (IOException e) {
             e.printStackTrace();
@@ -160,6 +195,7 @@ public class CrimeDetailsExtarctionUMBCImpl implements CrimeDetailsExtraction{
 
         return report;
     }
+
     private static void downloadPdf(String pdfURL, String destination) throws IOException {
         CloseableHttpClient httpClient = HttpClients.createDefault();
         HttpGet request = new HttpGet(pdfURL);
@@ -186,6 +222,7 @@ public class CrimeDetailsExtarctionUMBCImpl implements CrimeDetailsExtraction{
         }
         return inputDate;
     }
+
     private String convertCrimeType(String crimeType) {
         if (crimeType == null) {
             return null;
@@ -196,5 +233,11 @@ public class CrimeDetailsExtarctionUMBCImpl implements CrimeDetailsExtraction{
             crime[0] = "MAL DESTRUCTION";
         }
         return crime[0];
+    }
+
+    public boolean isWithin24Hours(Timestamp timestamp1, Timestamp timestamp2) {
+        long diffInMilliseconds = Math.abs(timestamp2.getTime() - timestamp1.getTime());
+        long diffInHours = diffInMilliseconds / (60 * 60 * 1000); // Convert milliseconds to hours
+        return diffInHours <= 2400;
     }
 }

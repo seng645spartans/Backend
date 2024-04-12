@@ -43,6 +43,10 @@ public class GeoCodingService {
                 geocodingResults[0].geometry.location.lng);
     }
 
+    public void cacheEvict(){
+        jedisPooled.flushDB();
+    }
+
     @PreDestroy
     public void shutdown() {
         if (context != null) {

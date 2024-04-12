@@ -1,7 +1,10 @@
 package com.crimeMap.Backend.Controllers;
 
 import com.crimeMap.Backend.DTO.Response.CrimeDetailsDTO;
+import com.crimeMap.Backend.DTO.Response.CrimeDetailsInfoDTO;
 import com.crimeMap.Backend.Entities.CrimeDetails;
+import com.crimeMap.Backend.Repository.CrimeDetailsRepository;
+import com.crimeMap.Backend.Repository.CrimeTypeRepository;
 import com.crimeMap.Backend.Services.CrimeDataExtraction.CrimeDetailsExtraction;
 import com.crimeMap.Backend.Services.GeoCoding.GeoCodingCrimeData;
 import org.springframework.beans.BeansException;
@@ -23,6 +26,11 @@ public class CrimeDetailsController {
     @Autowired
     GeoCodingCrimeData geoCodingCrimeData;
 
+    @Autowired
+    CrimeDetailsRepository crimeDetailsRepository;
+
+    @Autowired
+    CrimeTypeRepository crimeTypeRepository;
 
     @GetMapping("/{universityName}")
     public ResponseEntity<List<CrimeDetailsDTO>> getCrimeDetails(@PathVariable String universityName) {
@@ -37,5 +45,24 @@ public class CrimeDetailsController {
         List<CrimeDetails> crimeDetails = crimeDetailsExtraction.getCrimeDetails(universityName);
         List<CrimeDetailsDTO> crimeDetailsDTOList = geoCodingCrimeData.getDetailsWithCoordinates(crimeDetails);
         return ResponseEntity.ok(crimeDetailsDTOList);
+    }
+
+    @GetMapping("/Info/{caseId}")
+    public ResponseEntity<CrimeDetailsInfoDTO> getCrimeDetailsInfo(@PathVariable String caseId) {
+         CrimeDetails crimeDetails = crimeDetailsRepository.getByCaseId(caseId);
+
+         CrimeDetailsInfoDTO crimeDetailsDTO = new CrimeDetailsInfoDTO();
+         crimeDetailsDTO.setType(crimeDetails.getCrimeType());
+         crimeDetailsDTO.setDate(String.valueOf(crimeDetails.getDateOccurred()));
+         crimeDetailsDTO.setDescription(crimeDetails.getDetails());
+         crimeDetailsDTO.setAddress(crimeDetails.getLocation());
+
+        return ResponseEntity.ok(crimeDetailsDTO);
+    }
+
+    @GetMapping("/crimeTypes")
+    public ResponseEntity<?> getCrimeType(){
+        List<String> crimes = crimeTypeRepository.findAllDescriptions();
+        return ResponseEntity.ok(crimes);
     }
 }
