@@ -4,6 +4,7 @@ import com.crimeMap.Backend.DTO.Response.GeocodingResultDTO;
 import com.google.maps.GeoApiContext;
 import com.google.maps.GeocodingApi;
 import com.google.maps.model.GeocodingResult;
+import lombok.extern.log4j.Log4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import redis.clients.jedis.JedisPooled;
@@ -29,7 +30,6 @@ public class GeoCodingService {
     }
 
     public GeocodingResultDTO geocode(String address) throws Exception {
-
         if (Objects.nonNull(jedisPooled.get(address+ ":lat"))){
              GeocodingResultDTO geocodingResultDTO = new GeocodingResultDTO();
              geocodingResultDTO.setLat(Double.valueOf(jedisPooled.get(address+ ":lat")));

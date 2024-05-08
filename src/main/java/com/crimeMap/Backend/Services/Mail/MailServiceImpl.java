@@ -15,14 +15,17 @@ public class MailServiceImpl implements MailService{
 
 
     @Override
-    public void sendSimpleMessage(String to, String subject, String text) {
+    public void sendSimpleMessage(String to, String subject, String crimeType, String location) {
         try {
             MimeMessage message = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(message, true);
 
+            String htmlContent = "<h1 style='color: navy;'>Crime Alert</h1>" +
+                    "<p style='font-family: Arial, sans-serif; font-size: 16px;'>Crime <strong>" + crimeType + "</strong> has been reported at <em>" + location + "</em>.</p>";
+
             helper.setTo(to);
             helper.setSubject(subject);
-            helper.setText(text, true);
+            helper.setText(htmlContent, true);
 
             mailSender.send(message);
         } catch (MessagingException e) {

@@ -5,5 +5,5 @@ import org.springframework.stereotype.Service;
 
 
 public interface MailService {
-    void sendSimpleMessage(String to, String subject, String text);
+    void sendSimpleMessage(String to, String subject, String crimeType, String location);
 }

@@ -6,5 +6,5 @@ import com.crimeMap.Backend.Entities.CrimeDetails;
 import java.util.List;
 
 public interface GeoCodingCrimeData {
-   List<CrimeDetailsDTO> getDetailsWithCoordinates(List<CrimeDetails> crimeDetailsList);
+   List<CrimeDetailsDTO> getDetailsWithCoordinates(List<CrimeDetails> crimeDetailsList,String university);
 }

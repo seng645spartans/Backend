@@ -21,7 +21,7 @@ public class CrimeType {
     @Column(name = "description", nullable = false)
     private String description;
 
-    @Column(name = "is_active", nullable = false)
+    @Column(name = "is_active")
     private Boolean isActive;
 
     @Column(name = "created_at", nullable = false, updatable = false)

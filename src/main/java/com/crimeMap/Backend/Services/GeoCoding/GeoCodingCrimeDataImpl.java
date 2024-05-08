@@ -18,13 +18,22 @@ public class GeoCodingCrimeDataImpl implements GeoCodingCrimeData {
     private GeoCodingService geoCodingService;
 
     @Override
-    public List<CrimeDetailsDTO> getDetailsWithCoordinates(List<CrimeDetails> crimeDetailsList) {
+    public List<CrimeDetailsDTO> getDetailsWithCoordinates(List<CrimeDetails> crimeDetailsList,String university) {
         List<CrimeDetailsDTO> crimeDetailsDTOList = new ArrayList<>();
-
         for (CrimeDetails crimeDetails : crimeDetailsList) {
             try {
                 // Assuming the location in CrimeDetails is the address for geocoding
-                GeocodingResultDTO result = geoCodingService.geocode(convertCrimeLocation(crimeDetails.getLocation()) + " UMBC Baltimore, MD 21250");
+                System.out.println("University : " + university);
+                GeocodingResultDTO result = null;
+
+                if ("UMBC".equals(university)) {
+                    result = geoCodingService.geocode(convertCrimeLocation(crimeDetails.getLocation()) + " UMBC Baltimore, MD 21250");
+                    System.out.println("Longitude: " + result.getLng());
+                } else if ("UMCP".equals(university)) {
+                    result = geoCodingService.geocode(convertCrimeLocation(crimeDetails.getLocation()) + " UMCP College Park, MD 20742");
+                    System.out.println("Longitude: " + result.getLng());
+                }
+
                 CrimeDetailsDTO dto = new CrimeDetailsDTO();
 
                 // Copying properties from crimeDetails to dto

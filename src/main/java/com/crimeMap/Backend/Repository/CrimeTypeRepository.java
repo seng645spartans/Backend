@@ -1,5 +1,6 @@
 package com.crimeMap.Backend.Repository;
 
+import com.crimeMap.Backend.DTO.Response.CrimeTypeDTO;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
@@ -17,4 +18,10 @@ public interface CrimeTypeRepository extends JpaRepository<CrimeType, Long> {
 
     @Query("SELECT c.description FROM CrimeType c")
     List<String> findAllDescriptions();
+
+    @Query("SELECT c.description FROM CrimeType c WHERE c.isActive = true")
+    List<String> findActiveCrimeDescriptions();
+
+    @Query("SELECT new com.crimeMap.Backend.DTO.Response.CrimeTypeDTO(c.id,c.description, c.isActive) FROM CrimeType c")
+    List<CrimeTypeDTO> findAllCrimesWithActiveStatus();
 }

@@ -55,11 +55,12 @@ public class CrimeDetailsExtarctionUMBCImpl implements CrimeDetailsExtraction {
 
     @Override
     public List<CrimeDetails> getCrimeDetails(String universityName) {
-        File file = getCrimePdf();
-        List<CrimeDetails> crimeDetailsList = new ArrayList<>();
-        if(schedulerCheck(universityName)){
+
+       if(schedulerCheck(universityName)){
             return returnCrimeDetailsFromDB(universityName);
         }
+        File file = getCrimePdf();
+        List<CrimeDetails> crimeDetailsList = new ArrayList<>();
         try (PDDocument document = PDDocument.load(file)) {
             PDFTextStripper pdfStripper = new PDFTextStripper();
             String text = pdfStripper.getText(document);
@@ -85,10 +86,10 @@ public class CrimeDetailsExtarctionUMBCImpl implements CrimeDetailsExtraction {
     private List<CrimeDetails> returnCrimeDetailsFromDB(String universityName) {
         University university = universityRepository.findByName(universityName);
         LocalDateTime now = LocalDateTime.now();
-        LocalDateTime ninetyDaysAgoDateTime = now.minusDays(90);
+        LocalDateTime ninetyDaysAgoDateTime = now.minusDays(120);
         Timestamp ninetyDaysAgo = Timestamp.valueOf(ninetyDaysAgoDateTime);
         return crimeDetailsRepository.
-               findByUniversityAndDateReportedAfter(university,ninetyDaysAgo);
+                findByUniversityAndDateReportedAfterAndCrimeTypeActive(university,ninetyDaysAgo);
     }
 
     private void SaveSchedulerRun(String universityName) {
@@ -238,6 +239,6 @@ public class CrimeDetailsExtarctionUMBCImpl implements CrimeDetailsExtraction {
     public boolean isWithin24Hours(Timestamp timestamp1, Timestamp timestamp2) {
         long diffInMilliseconds = Math.abs(timestamp2.getTime() - timestamp1.getTime());
         long diffInHours = diffInMilliseconds / (60 * 60 * 1000); // Convert milliseconds to hours
-        return diffInHours <= 2400;
+        return diffInHours <= 24;
     }
 }

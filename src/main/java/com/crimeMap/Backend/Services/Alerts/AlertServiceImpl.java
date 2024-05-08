@@ -77,7 +77,7 @@ public class AlertServiceImpl implements AlertService{
                 // Check if the crime matches the alert criteria (e.g., crime type)
                 if (alert.getCrimeType().equals(crime.getCrimeTypeID())) {
                     // Send email notification
-                    emailService.sendSimpleMessage(alert.getEmailId(), "Crime Alert", crime.getCrimeType() + " " + crime.getLocation());
+                    emailService.sendSimpleMessage(alert.getEmailId(), "Crime Alert", crime.getCrimeType() , crime.getLocation());
                 }
             }
         }

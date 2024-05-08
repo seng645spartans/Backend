@@ -9,4 +9,6 @@ import java.util.List;
 @Repository
 public interface AlertsRepository extends JpaRepository<Alerts, Long> {
     List<Alerts> findByIsActiveTrueAndUniversityId(Long universityId);
+
+
 }
