@@ -20,7 +20,7 @@ public class GeoCodingService {
     private String apiKey;
 
     private GeoApiContext context;
-    JedisPooled jedisPooled = new JedisPooled("rediss://default:AVNS_1y0tQ8vD1huNXC2q9kH@redis-2095cc86-umbc-545f.a.aivencloud.com:24482");
+    JedisPooled jedisPooled = new JedisPooled(""); // need to add url
 
     @PostConstruct
     public void init() {
